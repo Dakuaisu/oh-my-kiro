@@ -11,7 +11,8 @@ Requires `kiro-cli` and `python3`.
 ```bash
 git clone https://github.com/Dakuaisu/oh-my-kiro.git
 cd oh-my-kiro
-./install.sh --default   # --default makes sisyphus the agent plain `kiro-cli` starts with
+./install.sh --default           # sisyphus becomes the agent plain `kiro-cli` starts with
+./install.sh --default --trust   # same, plus no approval prompts (see Permissions)
 ```
 
 The installer copies prompts and hooks into `~/.kiro`, generates the agent configs in `~/.kiro/agents/`, and validates each one. It is safe to re-run after pulling updates.
@@ -49,7 +50,7 @@ Keywords are also matched in Korean, Japanese, Chinese and Vietnamese.
 
 | Agent | Model | Role |
 |---|---|---|
-| `sisyphus` (ctrl+shift+s) | claude-opus-4.5 | Main orchestrator |
+| `sisyphus` (ctrl+shift+s) | claude-opus-5.5 | Main orchestrator |
 | `atlas` (ctrl+shift+a) | claude-opus-4.5 | Executes `.sisyphus/plans/*.md` by delegating every task |
 | `prometheus` (ctrl+shift+p) | claude-opus-4.5 | Planner; can only write `.md` under `.sisyphus/` (enforced by hook) |
 | `oracle` | gpt-5.6-sol | Read-only consultant: architecture, hard debugging, self-review |
@@ -76,7 +77,11 @@ To change a model, edit `CATEGORIES` / the `agent(...)` entries in `generate-age
 
 ## Permissions
 
-Each agent auto-approves only read-only tools (`read`, `grep`, `glob`, `code`, `todo_list`; librarian also `web_search` / `web_fetch`). Writes and non-read-only shell commands prompt for approval, including inside subagents. `/tools trust-all` in the parent session is inherited by subagents it spawns.
+By default each agent auto-approves only read-only tools (`read`, `grep`, `glob`, `code`, `todo_list`; librarian also `web_search` / `web_fetch`). Writes and non-read-only shell commands prompt for approval, including inside subagents.
+
+`./install.sh --trust` makes that permanent instead: every agent that has `write` / `shell` auto-approves them, and orchestrators spawn any subagent without asking. A deny-list still blocks `sudo`, `rm -rf` on `/` or `~`, `git push --force`, `git reset --hard`, `git clean -f`, `mkfs` and `dd` to devices, and Prometheus can still only write `.md` under `.sisyphus/`. Re-run `./install.sh` without `--trust` to restore prompts.
+
+For a single session instead, use `kiro-cli chat --trust-all-tools` or `/tools trust-all` (subagents inherit it).
 
 ## Differences from oh-my-opencode
 

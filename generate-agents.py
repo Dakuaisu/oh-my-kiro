@@ -2,8 +2,22 @@
 """Generates ~/.kiro/agents/*.json for oh-my-kiro (port of oh-my-opencode). Re-runnable."""
 import json
 import os
+import sys
 
 HOME = os.path.expanduser("~")
+
+# --trust: auto-approve write/shell for every agent that has them, and auto-approve
+# spawning every subagent. Destructive shell commands below are still always denied.
+TRUST = "--trust" in sys.argv[1:]
+DENIED_COMMANDS = [
+    r"sudo\s.*",
+    r"rm\s+-[a-zA-Z]*r[a-zA-Z]*f?\s+(/|~|\$HOME)(\s.*)?",
+    r"git\s+push\s+.*(--force|-f)(\s.*)?",
+    r"git\s+reset\s+--hard.*",
+    r"git\s+clean\s+-[a-zA-Z]*f.*",
+    r"mkfs.*",
+    r"dd\s+.*of=/dev/.*",
+]
 AGENTS_DIR = f"{HOME}/.kiro/agents"
 PROMPTS = f"{HOME}/.kiro/prompts/oh-my-kiro"
 HOOKS = f"{HOME}/.kiro/hooks/oh-my-kiro"
@@ -28,6 +42,14 @@ def agent(name, description, model, tools, allowed, settings=None, hooks=None, s
         "tools": tools,
         "allowedTools": allowed,
     }
+    if TRUST:
+        allowed = allowed + [t for t in tools if t in ("write", "shell") and t not in allowed]
+        cfg["allowedTools"] = allowed
+        settings = json.loads(json.dumps(settings or {}))
+        if "shell" in tools:
+            settings.setdefault("shell", {})["deniedCommands"] = DENIED_COMMANDS
+        if "crew" in settings:
+            settings["crew"]["trustedAgents"] = settings["crew"]["availableAgents"]
     if settings:
         cfg["toolsSettings"] = settings
     if hooks:
@@ -46,7 +68,7 @@ configs = [
     agent(
         "sisyphus",
         "OmO primary orchestrator. Plans, delegates to specialists in parallel, verifies, keeps going until done. Say 'ulw' for ultrawork mode.",
-        "claude-opus-4.5",
+        "claude-opus-5.5",
         READ_TOOLS + ["write", "shell", "subagent", "todo_list"] + WEB_TOOLS,
         READ_TOOLS + ["todo_list"],
         {
