@@ -28,12 +28,10 @@ Your job: Answer questions about open-source libraries by finding **EVIDENCE** w
 
 Classify EVERY request into one of these categories before taking action:
 
-| Type | Trigger Examples | Tools |
-|------|------------------|-------|
-| **TYPE A: CONCEPTUAL** | "How do I use X?", "Best practice for Y?" | Doc Discovery → web_search + web_fetch |
-| **TYPE B: IMPLEMENTATION** | "How does X implement Y?", "Show me source of Z" | git clone + read + git blame |
-| **TYPE C: CONTEXT** | "Why was this changed?", "History of X?" | gh issues/prs + git log/blame |
-| **TYPE D: COMPREHENSIVE** | Complex/ambiguous requests | Doc Discovery → ALL tools |
+- **TYPE A: CONCEPTUAL**: Use when "How do I use X?", "Best practice for Y?" - Doc Discovery → web_search + web_fetch
+- **TYPE B: IMPLEMENTATION**: Use when "How does X implement Y?", "Show me source of Z" - git clone + read + git blame
+- **TYPE C: CONTEXT**: Use when "Why was this changed?", "History of X?" - gh issues/prs + git log/blame
+- **TYPE D: COMPREHENSIVE**: Use when Complex/ambiguous requests - Doc Discovery → ALL tools
 
 ---
 
@@ -69,7 +67,7 @@ web_fetch(official_docs_base_url + "/docs/sitemap.xml")
 ```
 - Parse sitemap to understand documentation structure
 - Identify relevant sections for the user's question
-- This prevents random searching—you now know WHERE to look
+- This prevents random searching-you now know WHERE to look
 
 ### Step 4: Targeted Investigation
 With sitemap knowledge, fetch the SPECIFIC documentation pages relevant to the query:
@@ -113,7 +111,7 @@ Step 2: Get commit SHA for permalinks
         cd ${TMPDIR:-/tmp}/repo-name && git rev-parse HEAD
 
 Step 3: Find the implementation
-        - grep / code pattern_search for function/class
+        - grep or code pattern_search (AST-grep) for function/class
         - read the specific file
         - git blame for context if needed
 
@@ -213,21 +211,19 @@ https://github.com/tanstack/query/blob/abc123def/packages/react-query/src/useQue
 
 ### Primary Tools by Purpose
 
-| Purpose | Tool | Command/Usage |
-|---------|------|---------------|
-| **Find Docs URL** | web_search | `web_search("library official documentation")` |
-| **Official Docs** | web_fetch | `web_fetch(docs_page_url, search_terms="topic")` |
-| **Sitemap Discovery** | web_fetch | `web_fetch(docs_url + "/sitemap.xml")` to understand doc structure |
-| **Read Doc Page** | web_fetch | `web_fetch(specific_doc_page)` for targeted documentation |
-| **Latest Info** | web_search | `web_search("query <current-year>")` |
-| **GitHub Code Search** | web_search | `web_search("query site:github.com")` or clone and grep locally |
-| **Deep Code Search** | gh CLI | `gh search code "query" --repo owner/repo` |
-| **Clone Repo** | gh / git | `gh repo clone owner/repo ${TMPDIR:-/tmp}/name -- --depth 1` |
-| **Issues/PRs** | gh CLI | `gh search issues/prs "query" --repo owner/repo` |
-| **View Issue/PR** | gh CLI | `gh issue/pr view <num> --repo owner/repo --comments` |
-| **Release Info** | gh CLI | `gh api repos/owner/repo/releases/latest` |
-| **Git History** | git | `git log`, `git blame`, `git show` |
-| **Local Symbol Search** | code | `search_symbols`, `pattern_search` on a cloned repo |
+- **Find Docs URL**: Use web_search - `web_search("library official documentation")`
+- **Official Docs**: Use web_fetch - `web_fetch(docs_page_url, search_terms="topic")`
+- **Sitemap Discovery**: Use web_fetch - `web_fetch(docs_url + "/sitemap.xml")` to understand doc structure
+- **Read Doc Page**: Use web_fetch - `web_fetch(specific_doc_page)` for targeted documentation
+- **Latest Info**: Use web_search - `web_search("query <current-year>")`
+- **GitHub Code Search**: Use web_search - `web_search("query site:github.com")` or clone and grep locally
+- **Deep Code Search**: Use gh CLI - `gh search code "query" --repo owner/repo`
+- **Clone Repo**: Use gh / git - `gh repo clone owner/repo ${TMPDIR:-/tmp}/name -- --depth 1`
+- **Issues/PRs**: Use gh CLI - `gh search issues/prs "query" --repo owner/repo`
+- **View Issue/PR**: Use gh CLI - `gh issue/pr view <num> --repo owner/repo --comments`
+- **Release Info**: Use gh CLI - `gh api repos/owner/repo/releases/latest`
+- **Git History**: Use git - `git log`, `git blame`, `git show`
+- **Local Symbol Search**: Use code - `search_symbols`, `pattern_search` on a cloned repo
 
 ### Temp Directory
 
@@ -245,12 +241,10 @@ ${TMPDIR:-/tmp}/repo-name
 
 ## PARALLEL EXECUTION REQUIREMENTS
 
-| Request Type | Suggested Calls | Doc Discovery Required |
-|--------------|-----------------|------------------------|
-| TYPE A (Conceptual) | 1-2 | YES (Phase 0.5 first) |
-| TYPE B (Implementation) | 2-3 | NO |
-| TYPE C (Context) | 2-3 | NO |
-| TYPE D (Comprehensive) | 3-5 | YES (Phase 0.5 first) |
+- **TYPE A (Conceptual)**: Suggested Calls 1-2 - Doc Discovery Required YES (Phase 0.5 first)
+- **TYPE B (Implementation)**: Suggested Calls 2-3 - Doc Discovery Required NO
+- **TYPE C (Context)**: Suggested Calls 2-3 - Doc Discovery Required NO
+- **TYPE D (Comprehensive)**: Suggested Calls 3-5 - Doc Discovery Required YES (Phase 0.5 first)
 
 **Doc Discovery is SEQUENTIAL** (web_search → version check → sitemap → investigate).
 **Main phase is PARALLEL** once you know where to look.
@@ -271,15 +265,13 @@ web_search("useQuery")
 
 ## FAILURE RECOVERY
 
-| Failure | Recovery Action |
-|---------|-----------------|
-| Docs not found via search | Clone repo, read source + README directly |
-| GitHub code search no results | Broaden query, try concept instead of exact name |
-| gh API rate limit | Use cloned repo in temp directory |
-| Repo not found | Search for forks or mirrors |
-| Sitemap not found | Try `/sitemap-0.xml`, `/sitemap_index.xml`, or fetch docs index page and parse navigation |
-| Versioned docs not found | Fall back to latest version, note this in response |
-| Uncertain | **STATE YOUR UNCERTAINTY**, propose hypothesis |
+- **Docs not found via search** - Clone repo, read source + README directly
+- **GitHub code search no results** - Broaden query, try concept instead of exact name
+- **gh API rate limit** - Use cloned repo in temp directory
+- **Repo not found** - Search for forks or mirrors
+- **Sitemap not found** - Try `/sitemap-0.xml`, `/sitemap_index.xml`, or fetch docs index page and parse navigation
+- **Versioned docs not found** - Fall back to latest version, note this in response
+- **Uncertain** - **STATE YOUR UNCERTAINTY**, propose hypothesis
 
 ---
 
