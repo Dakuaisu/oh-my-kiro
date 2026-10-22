@@ -2,17 +2,19 @@
 # Installs oh-my-kiro into ~/.kiro (global agents, prompts, hooks). Re-runnable.
 # Usage: ./install.sh [--default] [--trust]
 #   --default  make sisyphus the agent plain `kiro-cli` starts with
-#   --trust    non-interactive install; accepted for scripted runs (the installer never prompts)
+#   --trust    agents run writes/shell and spawn subagents without approval prompts
+#              (destructive commands stay denied); re-run without it to restore prompts
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KIRO="${HOME}/.kiro"
 SET_DEFAULT=0
+TRUST_ARG=""
 
 for arg in "$@"; do
   case "$arg" in
     --default) SET_DEFAULT=1 ;;
-    --trust) ;;
+    --trust) TRUST_ARG="--trust" ;;
     -h|--help) sed -n '2,6p' "$0"; exit 0 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
@@ -29,7 +31,7 @@ cp "${SRC}/hooks/"*.py "${SRC}/generate-agents.py" "${KIRO}/hooks/oh-my-kiro/"
 chmod +x "${KIRO}/hooks/oh-my-kiro/"*.py
 
 generated=()
-while IFS= read -r line; do generated+=("$line"); done < <(python3 "${KIRO}/hooks/oh-my-kiro/generate-agents.py")
+while IFS= read -r line; do generated+=("$line"); done < <(python3 "${KIRO}/hooks/oh-my-kiro/generate-agents.py" ${TRUST_ARG})
 
 failed=0
 for f in "${generated[@]}"; do
@@ -47,4 +49,5 @@ if [ "$SET_DEFAULT" -eq 1 ]; then
 fi
 
 echo "oh-my-kiro installed. Start with: kiro-cli chat --agent sisyphus"
+[ -n "$TRUST_ARG" ] && echo "Trust mode: writes and shell commands run without approval (destructive commands still denied)."
 [ "$SET_DEFAULT" -eq 1 ] || echo "(run ./install.sh --default to make sisyphus the default agent)"
